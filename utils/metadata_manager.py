@@ -1,4 +1,11 @@
-import pyexiv2
+pyexiv2_supported = False
+try:
+    import pyexiv2
+    pyexiv2_supported = True
+except ImportError:
+    # Fix for MacOS failing to install pyexiv2
+    pass
+
 from mutagen.mp4 import MP4
 from mutagen.id3 import ID3, TXXX
 
@@ -109,8 +116,9 @@ class MetadataManager:
             self.raw_metadata = MP4(self.filepath)
 
     def read_image_metadata(self):
-        with pyexiv2.Image(self.filepath) as image:
-            self.raw_metadata = image.read_exif()
+        if(pyexiv2_supported):
+            with pyexiv2.Image(self.filepath) as image:
+                self.raw_metadata = image.read_exif()
 
     # add metadata
     def add_metadata(self):
@@ -145,7 +153,7 @@ class MetadataManager:
         self.raw_metadata[key] = value
 
     def save(self):
-        if self.filetype in self.image_filetypes:
+        if pyexiv2_supported and self.filetype in self.image_filetypes:
             with pyexiv2.Image(self.filepath) as image:
                 image.modify_exif(self.raw_metadata)
         else:
